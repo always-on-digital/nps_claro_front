@@ -12,16 +12,31 @@ import { SortableSection } from "@/components/dashboard/SortableSection";
 import { useSortableSections } from "@/hooks/useSortableSections";
 import {
   regioes,
-  metricasGlobais,
   evolucaoData,
   type Cliente,
 } from "@/data/mockData";
 import { useClientes } from "@/services/clientesService";
+import { useMetricasGlobais } from "@/services/metricasGlobaisService";
 
 const SECTION_IDS = ["metrics", "map", "charts", "table"];
 
+const defaultMetricas = {
+  total_clientes: 0,
+  total_respondidos: 0,
+  total_calculados: 0,
+  nps_score: 0,
+  promotores: { quantidade: 0, percentual: 0 },
+  neutros: { quantidade: 0, percentual: 0 },
+  detratores: { quantidade: 0, percentual: 0 },
+};
+
 const Index = () => {
-  const { data: clientes = [], isLoading, isError } = useClientes();
+  const { data: clientes = [], isLoading: isLoadingClientes, isError: isErrorClientes } = useClientes();
+  const { data: metricasGlobais, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasGlobais();
+
+  const isLoading = isLoadingClientes || isLoadingMetricas;
+  const isError = isErrorClientes || isErrorMetricas;
+  const metricas = metricasGlobais ?? defaultMetricas;
 
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
@@ -40,7 +55,7 @@ const Index = () => {
   }, [selectedCidade, clientes]);
 
   const sectionsMap: Record<string, ReactNode> = {
-    metrics: <MetricsCards metricas={metricasGlobais} />,
+    metrics: <MetricsCards metricas={metricas} />,
     map: (
       <MapaBrasil
         regioes={regioes}
@@ -50,7 +65,7 @@ const Index = () => {
     ),
     charts: (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ComparativoChart metricas={metricasGlobais} />
+        <ComparativoChart metricas={metricas} />
         <EvolucaoChart data={evolucaoData} />
       </div>
     ),
@@ -67,7 +82,7 @@ const Index = () => {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Carregando clientes…</p>
+          <p className="text-sm text-muted-foreground">Carregando dados…</p>
         </div>
       </div>
     );
@@ -77,7 +92,7 @@ const Index = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-center">
-          <p className="text-sm font-medium text-destructive">Erro ao carregar clientes</p>
+          <p className="text-sm font-medium text-destructive">Erro ao carregar dados</p>
           <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
         </div>
       </div>

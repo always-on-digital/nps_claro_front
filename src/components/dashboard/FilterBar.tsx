@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { produtos } from "@/data/produtosData";
+import type { Produto } from "@/data/produtosData";
 
 export interface Filters {
   periodo: string;
@@ -50,9 +50,10 @@ const ESTADOS: Record<string, string> = {
 interface FilterBarProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
+  produtos: Produto[];
 }
 
-export default function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
+export default function FilterBar({ filters, onFiltersChange, produtos }: FilterBarProps) {
   const update = (partial: Partial<Filters>) =>
     onFiltersChange({ ...filters, ...partial });
 

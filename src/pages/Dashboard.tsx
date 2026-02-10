@@ -15,7 +15,9 @@ import {
 } from "@dnd-kit/sortable";
 import { regioes, getPeriodCutoffDate, getPeriodMonths } from "@/data/mockData";
 import { useClientes } from "@/services/clientesService";
-import { produtos, getMetricasProduto } from "@/data/produtosData";
+import { useProdutos } from "@/services/produtosService";
+import { useMetricasGlobais } from "@/services/metricasGlobaisService";
+import { getMetricasProduto } from "@/data/produtosData";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
 import TabelaClientes from "@/components/dashboard/TabelaClientes";
@@ -29,7 +31,7 @@ import { SortableWrapper } from "@/components/dashboard/SortableWrapper";
 import { useSortableSections } from "@/hooks/useSortableSections";
 import FilterBar, { type Filters } from "@/components/dashboard/FilterBar";
 import DrillDownModal, { type DrillDownType } from "@/components/dashboard/DrillDownModal";
-import type { Cliente, MetricasGlobais } from "@/data/mockData";
+import type { Cliente } from "@/data/mockData";
 
 const REGIOES_UF: Record<string, string[]> = {
   Norte: ["AM", "PA", "RO", "RR", "AC", "AP", "TO"],
@@ -61,11 +63,16 @@ const DEFAULT_ORDER = [
 const FULL_WIDTH_IDS = new Set(["map", "clientes"]);
 
 export default function Dashboard() {
-  const { data: clientes = [], isLoading, isError } = useClientes();
+  const { data: clientes = [], isLoading: isLoadingClientes, isError: isErrorClientes } = useClientes();
+  const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
+  const { data: metricasGlobais, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasGlobais();
+
+  const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas;
+  const isError = isErrorClientes || isErrorProdutos || isErrorMetricas;
 
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
-  const [selectedProdutoId, setSelectedProdutoId] = useState(produtos[0].id);
+  const [selectedProdutoId, setSelectedProdutoId] = useState<number | null>(null);
   const [perfilCliente, setPerfilCliente] = useState<Cliente | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
@@ -77,8 +84,11 @@ export default function Dashboard() {
 
   const [drillDown, setDrillDown] = useState<{ type: DrillDownType; data?: any } | null>(null);
 
+  // Seleciona o primeiro produto quando a lista carrega e nenhum foi selecionado
+  const activeProdutoId = selectedProdutoId ?? produtos[0]?.id ?? 0;
+
   const periodMonths = getPeriodMonths(filters.periodo);
-  const metricas = getMetricasProduto(selectedProdutoId, periodMonths);
+  const metricas = getMetricasProduto(activeProdutoId, periodMonths);
 
   const { sectionOrder, handleDragEnd } = useSortableSections(DEFAULT_ORDER);
 
@@ -108,38 +118,17 @@ export default function Dashboard() {
       }
     }
     return result;
-  }, [filters, clientes]);
+  }, [filters, clientes, produtos]);
 
-  const filteredMetricas = useMemo<MetricasGlobais>(() => {
-    const total = filteredClientes.length;
-    if (total === 0) {
-      return {
-        total_clientes: 0,
-        total_respondidos: 0,
-        total_calculados: 0,
-        nps_score: 0,
-        promotores: { quantidade: 0, percentual: 0 },
-        neutros: { quantidade: 0, percentual: 0 },
-        detratores: { quantidade: 0, percentual: 0 },
-      };
-    }
-    const promotores = filteredClientes.filter((c) => c.categoria === "Promotor");
-    const neutros = filteredClientes.filter((c) => c.categoria === "Neutro");
-    const detratores = filteredClientes.filter((c) => c.categoria === "Detrator");
-    const respondidos = filteredClientes.filter((c) => c.tipo === "Respondido");
-    const calculados = filteredClientes.filter((c) => c.tipo === "Calculado");
-    const pctProm = (promotores.length / total) * 100;
-    const pctDet = (detratores.length / total) * 100;
-    return {
-      total_clientes: total,
-      total_respondidos: respondidos.length,
-      total_calculados: calculados.length,
-      nps_score: +(pctProm - pctDet).toFixed(1),
-      promotores: { quantidade: promotores.length, percentual: +((promotores.length / total) * 100).toFixed(1) },
-      neutros: { quantidade: neutros.length, percentual: +((neutros.length / total) * 100).toFixed(1) },
-      detratores: { quantidade: detratores.length, percentual: +((detratores.length / total) * 100).toFixed(1) },
-    };
-  }, [filteredClientes]);
+  const filteredMetricas = metricasGlobais ?? {
+    total_clientes: 0,
+    total_respondidos: 0,
+    total_calculados: 0,
+    nps_score: 0,
+    promotores: { quantidade: 0, percentual: 0 },
+    neutros: { quantidade: 0, percentual: 0 },
+    detratores: { quantidade: 0, percentual: 0 },
+  };
 
   const handleSelectCidade = (cidade: string | null, estado: string | null) => {
     setSelectedCidade(cidade);
@@ -179,7 +168,7 @@ export default function Dashboard() {
               <aside className="w-full md:w-[180px] md:shrink-0">
                 <ProdutoList
                   produtos={produtos}
-                  selectedId={selectedProdutoId}
+                  selectedId={activeProdutoId}
                   onSelect={setSelectedProdutoId}
                 />
               </aside>
@@ -264,7 +253,7 @@ export default function Dashboard() {
       <main className="flex flex-1 items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Carregando clientes…</p>
+          <p className="text-sm text-muted-foreground">Carregando dados…</p>
         </div>
       </main>
     );
@@ -274,7 +263,7 @@ export default function Dashboard() {
     return (
       <main className="flex flex-1 items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-center">
-          <p className="text-sm font-medium text-destructive">Erro ao carregar clientes</p>
+          <p className="text-sm font-medium text-destructive">Erro ao carregar dados</p>
           <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
         </div>
       </main>
@@ -285,7 +274,7 @@ export default function Dashboard() {
     <main className="flex-1 overflow-auto bg-background">
       <div className="mx-auto max-w-[1440px] space-y-3 p-3 sm:space-y-4 sm:p-4 md:p-5">
         {/* Filters */}
-        <FilterBar filters={filters} onFiltersChange={handleFiltersChange} />
+        <FilterBar filters={filters} onFiltersChange={handleFiltersChange} produtos={produtos} />
 
         {/* Row 1: Metric cards (fixed, not sortable) */}
         <MetricsCards metricas={filteredMetricas} onDrillDown={handleDrillDown} />

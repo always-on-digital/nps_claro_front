@@ -1,12 +1,39 @@
 import { useState } from "react";
-import { produtos, getMetricasProduto } from "@/data/produtosData";
+import { Loader2 } from "lucide-react";
+import { getMetricasProduto } from "@/data/produtosData";
+import { useProdutos } from "@/services/produtosService";
 import { ProdutoList } from "@/components/produtos/ProdutoList";
 import { ProdutoDashboard } from "@/components/produtos/ProdutoDashboard";
 
 export default function Produtos() {
-  const [selectedId, setSelectedId] = useState(produtos[0].id);
-  const metricas = getMetricasProduto(selectedId);
-  const produtoNome = produtos.find((p) => p.id === selectedId)?.nome ?? "";
+  const { data: produtos = [], isLoading, isError } = useProdutos();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const activeId = selectedId ?? produtos[0]?.id ?? 0;
+  const metricas = getMetricasProduto(activeId);
+  const produtoNome = produtos.find((p) => p.id === activeId)?.nome ?? "";
+
+  if (isLoading) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando produtos…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium text-destructive">Erro ao carregar produtos</p>
+          <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 p-4 md:p-5 overflow-auto">
@@ -18,16 +45,14 @@ export default function Produtos() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-3">
-        {/* Product list sidebar - reduced width (40% of original 1/4) */}
         <aside className="w-full lg:w-[10%] lg:min-w-[140px] shrink-0">
           <ProdutoList
             produtos={produtos}
-            selectedId={selectedId}
+            selectedId={activeId}
             onSelect={setSelectedId}
           />
         </aside>
 
-        {/* Dashboard - 3/4 width */}
         <section className="w-full lg:w-3/4 min-w-0">
           <ProdutoDashboard metricas={metricas} produtoNome={produtoNome} />
         </section>

@@ -125,8 +125,8 @@ function generateComparativo(
   };
 }
 
-const metricasPorProduto: Record<number, ProdutoMetricas> = {
-  1: {
+const metricasPorProduto: any = {
+  PRE_5GB: {
     nps_score: 32,
     csat_score: 58,
     csat_mes_anterior: 55,
@@ -147,9 +147,9 @@ const metricasPorProduto: Record<number, ProdutoMetricas> = {
     ],
     tempo_resposta_mensal: generateTempoMensal(14.5),
     satisfacao_breakdown: generateBreakdown(),
-    comparativo: generateComparativo(32, 5000, 85000, 42.5, 25.3, 32.2),
+    comparativo: generateComparativo(32, 99999, 85000, 42.5, 25.3, 32.2),
   },
-  2: {
+  PRE_10GB: {
     nps_score: 45,
     csat_score: 65,
     csat_mes_anterior: 62,
