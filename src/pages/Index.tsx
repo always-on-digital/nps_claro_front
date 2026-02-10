@@ -1,5 +1,5 @@
 import { useState, useMemo, type ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
 import ComparativoChart from "@/components/dashboard/ComparativoChart";
@@ -11,16 +11,18 @@ import { SortableContainer } from "@/components/dashboard/SortableContainer";
 import { SortableSection } from "@/components/dashboard/SortableSection";
 import { useSortableSections } from "@/hooks/useSortableSections";
 import {
-  clientes,
   regioes,
   metricasGlobais,
   evolucaoData,
   type Cliente,
 } from "@/data/mockData";
+import { useClientes } from "@/services/clientesService";
 
 const SECTION_IDS = ["metrics", "map", "charts", "table"];
 
 const Index = () => {
+  const { data: clientes = [], isLoading, isError } = useClientes();
+
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
   const [perfilCliente, setPerfilCliente] = useState<Cliente | null>(null);
@@ -35,7 +37,7 @@ const Index = () => {
   const filteredClientes = useMemo(() => {
     if (!selectedCidade) return clientes;
     return clientes.filter((c) => c.regiao.includes(selectedCidade));
-  }, [selectedCidade]);
+  }, [selectedCidade, clientes]);
 
   const sectionsMap: Record<string, ReactNode> = {
     metrics: <MetricsCards metricas={metricasGlobais} />,
@@ -59,6 +61,28 @@ const Index = () => {
       />
     ),
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando clientes…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium text-destructive">Erro ao carregar clientes</p>
+          <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

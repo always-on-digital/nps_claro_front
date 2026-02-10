@@ -19,6 +19,7 @@ export interface Filters {
 }
 
 const PERIODOS: Record<string, string> = {
+  todos: "Todos",
   "ultimo-mes": "Último Mês",
   "ultimos-3-meses": "Últimos 3 Meses",
   "ultimos-6-meses": "Últimos 6 Meses",

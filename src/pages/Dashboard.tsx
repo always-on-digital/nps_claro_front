@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -12,8 +13,8 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { clientes } from "@/data/mockData";
 import { regioes, getPeriodCutoffDate, getPeriodMonths } from "@/data/mockData";
+import { useClientes } from "@/services/clientesService";
 import { produtos, getMetricasProduto } from "@/data/produtosData";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
@@ -60,13 +61,15 @@ const DEFAULT_ORDER = [
 const FULL_WIDTH_IDS = new Set(["map", "clientes"]);
 
 export default function Dashboard() {
+  const { data: clientes = [], isLoading, isError } = useClientes();
+
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
   const [selectedProdutoId, setSelectedProdutoId] = useState(produtos[0].id);
   const [perfilCliente, setPerfilCliente] = useState<Cliente | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
-    periodo: "ultimos-6-meses",
+    periodo: "todos",
     regiao: null,
     estado: null,
     produto: null,
@@ -105,7 +108,7 @@ export default function Dashboard() {
       }
     }
     return result;
-  }, [filters]);
+  }, [filters, clientes]);
 
   const filteredMetricas = useMemo<MetricasGlobais>(() => {
     const total = filteredClientes.length;
@@ -255,6 +258,28 @@ export default function Dashboard() {
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando clientes…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium text-destructive">Erro ao carregar clientes</p>
+          <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 overflow-auto bg-background">

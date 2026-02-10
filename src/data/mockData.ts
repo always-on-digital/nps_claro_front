@@ -38,6 +38,7 @@ export interface EvolucaoData {
   nps_calculado: number[];
 }
 
+// Array estático removido — clientes agora vêm da API via useClientes()
 export const clientes: Cliente[] = [
   { id: 1, nome: "Maria Silva", cpf: "123.456.789-00", telefone: "(11) 98765-4321", nps_score: 9, categoria: "Promotor", tipo: "Respondido", regiao: "São Paulo - SP", produtos: ["Claro Móvel 50GB", "Internet 500MB"], data_cadastro: "2025-12-15", endereco: "Rua Augusta, 1200 - São Paulo, SP" },
   { id: 2, nome: "João Santos", cpf: "987.654.321-00", telefone: "(21) 97654-3210", nps_score: 4, categoria: "Detrator", tipo: "Calculado", regiao: "Rio de Janeiro - RJ", produtos: ["Claro Móvel 20GB"], data_cadastro: "2025-11-22", endereco: "Av. Atlântica, 500 - Rio de Janeiro, RJ" },
@@ -60,6 +61,7 @@ export const clientes: Cliente[] = [
   { id: 19, nome: "Larissa Castro", cpf: "246.135.789-00", telefone: "(85) 80987-6543", nps_score: 7, categoria: "Neutro", tipo: "Calculado", regiao: "Fortaleza - CE", produtos: ["Claro Móvel 20GB", "Internet 100MB"], data_cadastro: "2025-09-18", endereco: "Rua Barão de Studart, 1500 - Fortaleza, CE" },
   { id: 20, nome: "Felipe Duarte", cpf: "135.789.246-00", telefone: "(51) 79876-5432", nps_score: 10, categoria: "Promotor", tipo: "Respondido", regiao: "Porto Alegre - RS", produtos: ["Claro Móvel 80GB", "Internet 1GB", "Claro TV", "Claro Fixo"], data_cadastro: "2026-01-08", endereco: "Rua dos Andradas, 1000 - Porto Alegre, RS" },
 ];
+// Veja: src/services/clientesService.ts
 
 export const regioes: RegionalData[] = [
   { cidade: "São Paulo", estado: "SP", lat: -23.5505, lng: -46.6333, nps_score: 58, total_clientes: 25000, categoria_cor: "verde" },
@@ -107,6 +109,7 @@ export function maskCpf(cpf: string): string {
 
 /** Returns the cutoff date for the given period key */
 export function getPeriodCutoffDate(periodo: string): Date {
+  if (periodo === "todos") return new Date(0);
   const now = new Date();
   switch (periodo) {
     case "ultimo-mes":
@@ -118,17 +121,18 @@ export function getPeriodCutoffDate(periodo: string): Date {
     case "ultimo-ano":
       return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
     default:
-      return new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+      return new Date(0);
   }
 }
 
 /** Returns month count for a period key */
 export function getPeriodMonths(periodo: string): number {
   switch (periodo) {
+    case "todos": return 0;
     case "ultimo-mes": return 1;
     case "ultimos-3-meses": return 3;
     case "ultimos-6-meses": return 6;
     case "ultimo-ano": return 12;
-    default: return 6;
+    default: return 0;
   }
 }
