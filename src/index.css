@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 97%;
+    --foreground: 220 20% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 14%;
+
+    --primary: 356 97% 46%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 20% 14%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 356 60% 96%;
+    --accent-foreground: 356 80% 35%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 356 97% 46%;
+
+    --radius: 0.75rem;
+
+    /* NPS Status Colors */
+    --nps-promoter: 145 100% 39%;
+    --nps-promoter-bg: 145 60% 95%;
+    --nps-promoter-soft: 145 50% 88%;
+    --nps-neutral: 48 100% 50%;
+    --nps-neutral-bg: 48 60% 95%;
+    --nps-neutral-soft: 48 50% 88%;
+    --nps-detractor: 356 97% 46%;
+    --nps-detractor-bg: 356 50% 96%;
+    --nps-detractor-soft: 356 40% 90%;
+
+    /* Chart Colors */
+    --chart-promoter: #00C853;
+    --chart-neutral: #FFD600;
+    --chart-detractor: #E30613;
+    --chart-line-responded: #1976D2;
+    --chart-line-calculated: #FF9800;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 14%;
+    --sidebar-primary: 356 97% 46%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 356 60% 96%;
+    --sidebar-accent-foreground: 356 80% 35%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 356 97% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .nps-gradient-header {
+    background: linear-gradient(135deg, hsl(356 97% 46%), hsl(356 97% 38%));
+  }
+
+  .card-shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .card-shine:hover::after {
+    left: 100%;
+  }
+
+  .map-pulse {
+    animation: mapPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes mapPulse {
+    0%, 100% { r: 6; opacity: 1; }
+    50% { r: 10; opacity: 0.6; }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s ease-out forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
