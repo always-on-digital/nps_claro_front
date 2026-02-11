@@ -18,6 +18,7 @@ import { useClientes } from "@/services/clientesService";
 import { useProdutos } from "@/services/produtosService";
 import { useMetricasGlobais } from "@/services/metricasGlobaisService";
 import { useMetricasPorProduto, getMetricasDoProduto } from "@/services/metricasPorProdutoService";
+import { useLocalizacoes } from "@/services/localizacaoService";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
 import TabelaClientes from "@/components/dashboard/TabelaClientes";
@@ -67,6 +68,7 @@ export default function Dashboard() {
   const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
   const { data: metricasGlobais, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasGlobais();
   const { data: metricasMap, isLoading: isLoadingMetricasProd, isError: isErrorMetricasProd } = useMetricasPorProduto();
+  const { data: localizacoes = [], isLoading: isLoadingLocalizacoes, isError: isErrorLocalizacoes } = useLocalizacoes();
 
   const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas || isLoadingMetricasProd;
   const isError = isErrorClientes || isErrorProdutos || isErrorMetricas || isErrorMetricasProd;
@@ -179,7 +181,7 @@ export default function Dashboard() {
               </aside>
               <div className="flex-1 min-w-0">
                 <MapaBrasil
-                  regioes={regioes}
+                  localizacoes={localizacoes}
                   selectedCidade={selectedCidade}
                   selectedEstado={selectedEstado}
                   onSelectCidade={handleSelectCidade}
