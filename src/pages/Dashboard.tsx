@@ -17,6 +17,7 @@ import { regioes, getPeriodCutoffDate, getPeriodMonths } from "@/data/mockData";
 import { useClientes } from "@/services/clientesService";
 import { useProdutos } from "@/services/produtosService";
 import { useMetricasGlobais } from "@/services/metricasGlobaisService";
+import { useLocalizacoes } from "@/services/localizacaoService";
 import { getMetricasProduto } from "@/data/produtosData";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
@@ -66,9 +67,12 @@ export default function Dashboard() {
   const { data: clientes = [], isLoading: isLoadingClientes, isError: isErrorClientes } = useClientes();
   const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
   const { data: metricasGlobais, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasGlobais();
+  const { data: localizacoes = [], isLoading: isLoadingLocalizacoes, isError: isErrorLocalizacoes } = useLocalizacoes();
 
-  const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas;
-  const isError = isErrorClientes || isErrorProdutos || isErrorMetricas;
+  const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas || isLoadingLocalizacoes;
+  const isError = isErrorClientes || isErrorProdutos || isErrorMetricas || isErrorLocalizacoes;
+
+  console.log(">>> Localizações carregadas:", localizacoes);
 
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
@@ -174,7 +178,7 @@ export default function Dashboard() {
               </aside>
               <div className="flex-1 min-w-0">
                 <MapaBrasil
-                  regioes={regioes}
+                  localizacoes={localizacoes}
                   selectedCidade={selectedCidade}
                   selectedEstado={selectedEstado}
                   onSelectCidade={handleSelectCidade}
