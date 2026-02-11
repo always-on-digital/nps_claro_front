@@ -30,6 +30,7 @@ import { NPSRespondidoCardContent, NPSCalculadoCardContent, EvolucaoNPSCardConte
 import { SortableCard } from "@/components/dashboard/SortableCard";
 import { SortableWrapper } from "@/components/dashboard/SortableWrapper";
 import { useSortableSections } from "@/hooks/useSortableSections";
+import { useCardVisibility } from "@/hooks/useCardVisibility";
 import FilterBar, { type Filters } from "@/components/dashboard/FilterBar";
 import DrillDownModal, { type DrillDownType } from "@/components/dashboard/DrillDownModal";
 import type { Cliente } from "@/data/mockData";
@@ -63,6 +64,24 @@ const DEFAULT_ORDER = [
 
 const FULL_WIDTH_IDS = new Set(["map", "clientes"]);
 
+/** IDs que nunca podem ser ocultados (estruturais). */
+const ALWAYS_VISIBLE = new Set(["map", "clientes"]);
+
+/** Visibilidade padrão dos 9 cards entre o mapa e a tabela de clientes. */
+const DEFAULT_VISIBILITY: Record<string, boolean> = {
+  map: true,
+  csat: false,
+  nps: true,
+  ces: false,
+  satisfacao: true,
+  tempo_medio: true,
+  evolucao_csat: false,
+  comp_respondido: true,
+  comp_calculado: true,
+  evolucao_nps: true,
+  clientes: true,
+};
+
 export default function Dashboard() {
   const { data: clientes = [], isLoading: isLoadingClientes, isError: isErrorClientes } = useClientes();
   const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
@@ -94,6 +113,14 @@ export default function Dashboard() {
   const metricas = getMetricasDoProduto(metricasMap, activeProdutoId, periodMonths);
 
   const { sectionOrder, handleDragEnd } = useSortableSections(DEFAULT_ORDER);
+  const cardVisibility = useCardVisibility(DEFAULT_VISIBILITY, ALWAYS_VISIBLE);
+  const { isVisible } = cardVisibility;
+
+  /** sectionOrder filtrado — só inclui cards visíveis. */
+  const visibleSections = useMemo(
+    () => sectionOrder.filter((id) => isVisible(id)),
+    [sectionOrder, isVisible],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -292,9 +319,9 @@ export default function Dashboard() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={sectionOrder} strategy={rectSortingStrategy}>
+          <SortableContext items={visibleSections} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {sectionOrder.map(renderSection)}
+              {visibleSections.map(renderSection)}
             </div>
           </SortableContext>
         </DndContext>
