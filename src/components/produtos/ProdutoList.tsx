@@ -5,8 +5,8 @@ import type { Produto } from "@/data/produtosData";
 
 interface ProdutoListProps {
   produtos: Produto[];
-  selectedId: number;
-  onSelect: (id: number) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
 }
 
 export function ProdutoList({ produtos, selectedId, onSelect }: ProdutoListProps) {

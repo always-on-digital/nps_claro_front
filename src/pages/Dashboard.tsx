@@ -17,7 +17,7 @@ import { regioes, getPeriodCutoffDate, getPeriodMonths } from "@/data/mockData";
 import { useClientes } from "@/services/clientesService";
 import { useProdutos } from "@/services/produtosService";
 import { useMetricasGlobais } from "@/services/metricasGlobaisService";
-import { getMetricasProduto } from "@/data/produtosData";
+import { useMetricasPorProduto, getMetricasDoProduto } from "@/services/metricasPorProdutoService";
 import MetricsCards from "@/components/dashboard/MetricsCards";
 import MapaBrasil from "@/components/dashboard/MapaBrasil";
 import TabelaClientes from "@/components/dashboard/TabelaClientes";
@@ -66,13 +66,14 @@ export default function Dashboard() {
   const { data: clientes = [], isLoading: isLoadingClientes, isError: isErrorClientes } = useClientes();
   const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
   const { data: metricasGlobais, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasGlobais();
+  const { data: metricasMap, isLoading: isLoadingMetricasProd, isError: isErrorMetricasProd } = useMetricasPorProduto();
 
-  const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas;
-  const isError = isErrorClientes || isErrorProdutos || isErrorMetricas;
+  const isLoading = isLoadingClientes || isLoadingProdutos || isLoadingMetricas || isLoadingMetricasProd;
+  const isError = isErrorClientes || isErrorProdutos || isErrorMetricas || isErrorMetricasProd;
 
   const [selectedCidade, setSelectedCidade] = useState<string | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<string | null>(null);
-  const [selectedProdutoId, setSelectedProdutoId] = useState<number | null>(null);
+  const [selectedProdutoId, setSelectedProdutoId] = useState<string | null>(null);
   const [perfilCliente, setPerfilCliente] = useState<Cliente | null>(null);
 
   const [filters, setFilters] = useState<Filters>({
@@ -85,10 +86,10 @@ export default function Dashboard() {
   const [drillDown, setDrillDown] = useState<{ type: DrillDownType; data?: any } | null>(null);
 
   // Seleciona o primeiro produto quando a lista carrega e nenhum foi selecionado
-  const activeProdutoId = selectedProdutoId ?? produtos[0]?.id ?? 0;
+  const activeProdutoId = selectedProdutoId ?? produtos[0]?.id ?? "";
 
   const periodMonths = getPeriodMonths(filters.periodo);
-  const metricas = getMetricasProduto(activeProdutoId, periodMonths);
+  const metricas = getMetricasDoProduto(metricasMap, activeProdutoId, periodMonths);
 
   const { sectionOrder, handleDragEnd } = useSortableSections(DEFAULT_ORDER);
 
@@ -159,6 +160,10 @@ export default function Dashboard() {
   const renderSection = (id: string) => {
     const fullWidth = FULL_WIDTH_IDS.has(id);
     const spanClass = fullWidth ? "col-span-1 sm:col-span-2 lg:col-span-3" : "";
+
+    // Cards que dependem de métricas só renderizam quando os dados existem
+    const needsMetricas = id !== "map" && id !== "clientes";
+    if (needsMetricas && !metricas) return null;
 
     switch (id) {
       case "map":

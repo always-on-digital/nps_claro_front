@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { getMetricasProduto } from "@/data/produtosData";
 import { useProdutos } from "@/services/produtosService";
+import { useMetricasPorProduto, getMetricasDoProduto } from "@/services/metricasPorProdutoService";
 import { ProdutoList } from "@/components/produtos/ProdutoList";
 import { ProdutoDashboard } from "@/components/produtos/ProdutoDashboard";
 
 export default function Produtos() {
-  const { data: produtos = [], isLoading, isError } = useProdutos();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const { data: produtos = [], isLoading: isLoadingProdutos, isError: isErrorProdutos } = useProdutos();
+  const { data: metricasMap, isLoading: isLoadingMetricas, isError: isErrorMetricas } = useMetricasPorProduto();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const activeId = selectedId ?? produtos[0]?.id ?? 0;
-  const metricas = getMetricasProduto(activeId);
+  const isLoading = isLoadingProdutos || isLoadingMetricas;
+  const isError = isErrorProdutos || isErrorMetricas;
+
+  const activeId = selectedId ?? produtos[0]?.id ?? "";
+  const metricas = getMetricasDoProduto(metricasMap, activeId);
   const produtoNome = produtos.find((p) => p.id === activeId)?.nome ?? "";
 
   if (isLoading) {
@@ -54,7 +58,13 @@ export default function Produtos() {
         </aside>
 
         <section className="w-full lg:w-3/4 min-w-0">
-          <ProdutoDashboard metricas={metricas} produtoNome={produtoNome} />
+          {metricas ? (
+            <ProdutoDashboard metricas={metricas} produtoNome={produtoNome} />
+          ) : (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-sm text-muted-foreground">Sem métricas disponíveis para este produto</p>
+            </div>
+          )}
         </section>
       </div>
     </main>
