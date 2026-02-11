@@ -34,11 +34,19 @@ export type DrillDownType =
   | "comp_calculado"
   | "evolucao_nps";
 
+interface SampleClient {
+  nome: string;
+  score: number;
+  tipo: string;
+  regiao: string;
+}
+
 interface DrillDownModalProps {
   open: boolean;
   onClose: () => void;
   type: DrillDownType | null;
   data?: any;
+  clientes?: { nome: string; nps_score: number; tipo: string; regiao: string }[];
 }
 
 const TITLES: Record<DrillDownType, string> = {
@@ -162,21 +170,23 @@ function MonthlyTable({
   );
 }
 
-// Sample clients for demonstration
-const sampleClients = [
-  { nome: "Maria Silva", score: 9, tipo: "Respondido", regiao: "São Paulo - SP" },
-  { nome: "Ana Costa", score: 10, tipo: "Respondido", regiao: "São Paulo - SP" },
-  { nome: "Carla Mendes", score: 9, tipo: "Respondido", regiao: "Belo Horizonte - MG" },
-  { nome: "Juliana Almeida", score: 10, tipo: "Calculado", regiao: "Curitiba - PR" },
-  { nome: "Fernanda Rocha", score: 9, tipo: "Respondido", regiao: "Fortaleza - CE" },
-  { nome: "Diego Martins", score: 10, tipo: "Respondido", regiao: "Rio de Janeiro - RJ" },
-  { nome: "Thiago Barbosa", score: 9, tipo: "Calculado", regiao: "Brasília - DF" },
-  { nome: "Roberto Nascimento", score: 10, tipo: "Calculado", regiao: "Salvador - BA" },
-  { nome: "Marcelo Pereira", score: 9, tipo: "Respondido", regiao: "Curitiba - PR" },
-  { nome: "Felipe Duarte", score: 10, tipo: "Respondido", regiao: "Porto Alegre - RS" },
-];
+/** Converte clientes da API (nps_score) para o formato da SampleTable (score) */
+function toSampleClients(
+  clientes: { nome: string; nps_score: number; tipo: string; regiao: string }[]
+): SampleClient[] {
+  return clientes.map((c) => ({
+    nome: c.nome,
+    score: c.nps_score,
+    tipo: c.tipo,
+    regiao: c.regiao,
+  }));
+}
 
-function getContentForType(type: DrillDownType, data: any) {
+function getContentForType(
+  type: DrillDownType,
+  data: any,
+  sampleClients: SampleClient[],
+) {
   switch (type) {
     case "promotores":
       return (
@@ -211,15 +221,7 @@ function getContentForType(type: DrillDownType, data: any) {
             explanation="Neutros são clientes satisfeitos mas não entusiasmados. Podem migrar para promotores ou detratores."
           />
           <p className="text-xs font-semibold text-muted-foreground">Amostra de Registros</p>
-          <SampleTable
-            rows={[
-              { nome: "Pedro Oliveira", score: 7, tipo: "Calculado", regiao: "Brasília - DF" },
-              { nome: "Rafael Lima", score: 8, tipo: "Respondido", regiao: "Salvador - BA" },
-              { nome: "Patrícia Souza", score: 7, tipo: "Calculado", regiao: "São Paulo - SP" },
-              { nome: "Amanda Torres", score: 8, tipo: "Respondido", regiao: "Belo Horizonte - MG" },
-              { nome: "Larissa Castro", score: 7, tipo: "Calculado", regiao: "Fortaleza - CE" },
-            ]}
-          />
+          <SampleTable rows={sampleClients.filter((c) => c.score >= 7 && c.score <= 8).slice(0, 6)} />
         </div>
       );
     case "detratores":
@@ -237,15 +239,7 @@ function getContentForType(type: DrillDownType, data: any) {
             explanation="Detratores são clientes insatisfeitos que podem prejudicar a marca com feedback negativo."
           />
           <p className="text-xs font-semibold text-muted-foreground">Amostra de Registros</p>
-          <SampleTable
-            rows={[
-              { nome: "João Santos", score: 4, tipo: "Calculado", regiao: "Rio de Janeiro - RJ" },
-              { nome: "Lucas Ferreira", score: 3, tipo: "Calculado", regiao: "Porto Alegre - RS" },
-              { nome: "Bruno Cardoso", score: 5, tipo: "Calculado", regiao: "Recife - PE" },
-              { nome: "Camila Ribeiro", score: 2, tipo: "Respondido", regiao: "Manaus - AM" },
-              { nome: "Isabela Gomes", score: 6, tipo: "Calculado", regiao: "São Paulo - SP" },
-            ]}
-          />
+          <SampleTable rows={sampleClients.filter((c) => c.score <= 6).slice(0, 6)} />
         </div>
       );
     case "nps_score":
@@ -544,8 +538,10 @@ function getContentForType(type: DrillDownType, data: any) {
   }
 }
 
-export default function DrillDownModal({ open, onClose, type, data }: DrillDownModalProps) {
+export default function DrillDownModal({ open, onClose, type, data, clientes = [] }: DrillDownModalProps) {
   if (!type) return null;
+
+  const sampleClients = toSampleClients(clientes);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -557,7 +553,7 @@ export default function DrillDownModal({ open, onClose, type, data }: DrillDownM
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[65vh] pr-2">
-          {getContentForType(type, data)}
+          {getContentForType(type, data, sampleClients)}
         </ScrollArea>
       </DialogContent>
     </Dialog>

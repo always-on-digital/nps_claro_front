@@ -306,6 +306,7 @@ export default function Dashboard() {
         onClose={() => setDrillDown(null)}
         type={drillDown?.type ?? null}
         data={drillDown?.data}
+        clientes={clientes}
       />
     </main>
   );
