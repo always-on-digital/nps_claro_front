@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import {
   Smartphone, Tv, Wifi, Phone, Calendar, MapPin, Mail, MessageSquare,
-  TrendingUp, TrendingDown, Package, Clock, Activity, BarChart3, Users,
+  TrendingUp, TrendingDown, Package, Clock, Activity, BarChart3, Users, Network, MailOpen
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import type { Cliente } from "@/data/mockData";
@@ -78,6 +78,13 @@ function formatTempo(totalMonths: number) {
   return `${totalMonths} mês${totalMonths > 1 ? "es" : ""}`;
 }
 
+function formatTempoSegundos(valoSegundos: number) {
+  const minutos = Math.floor((valoSegundos % 3600) / 60); 
+  return `cerca de ${minutos} minutos`;
+}
+
+
+
 const consentChannels = [
   { label: "Email", icon: Mail },
   { label: "WhatsApp", icon: MessageSquare },
@@ -103,10 +110,14 @@ const PerfilModal = ({ cliente, open, onClose }: PerfilModalProps) => {
   const totalMonths = getMonthsAsClient(cliente.data_cadastro);
   const channels = getActiveChannels(cliente.id);
   const npsTrend = npsHistory[npsHistory.length - 1].score - npsHistory[0].score;
-  const totalInteracoes = 12 + (cliente.id * 3) % 20;
-  const engagementRate = Math.min(95, 40 + cliente.nps_score * 5 + cliente.produtos.length * 3);
-  const preferredChannel = cliente.id % 2 === 0 ? "WhatsApp" : "Email";
+  const totalInteracoes = cliente.count_interactions;
+  const engagementRate = Math.round(cliente.digital_engagement*100);
+  const preferredChannel = cliente.favorite_channel;
+  const supportHandleTimeAverage = Math.round(cliente.support_handle_time_avg);
+  const marketingOpenRate = Math.round(cliente.marketing_open_rate*100);
 
+
+  console.log(cliente)
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto p-0">
@@ -269,7 +280,7 @@ const PerfilModal = ({ cliente, open, onClose }: PerfilModalProps) => {
           {/* Charts / Indicators */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {/* NPS Evolution */}
-            <div className="rounded-xl border bg-card p-4">
+            {/* <div className="rounded-xl border bg-card p-4">
               <h4 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Evolução do NPS</h4>
               <div className="h-24">
                 <ResponsiveContainer width="100%" height="100%">
@@ -289,7 +300,7 @@ const PerfilModal = ({ cliente, open, onClose }: PerfilModalProps) => {
                 </ResponsiveContainer>
               </div>
               <p className="mt-1 text-center text-[10px] text-muted-foreground">Últimos 6 meses</p>
-            </div>
+            </div> */}
 
             {/* Interaction Frequency */}
             <div className="rounded-xl border bg-card p-4">
@@ -315,6 +326,41 @@ const PerfilModal = ({ cliente, open, onClose }: PerfilModalProps) => {
               <p className="mt-2 text-[10px] text-muted-foreground">
                 Canal preferido: <span className="font-medium text-foreground">{preferredChannel}</span>
               </p>
+            </div>
+
+              {/* Time support */}
+            <div className="flex items-center justify-between rounded-xl border bg-card p-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tempo médio de interações com o suporte</p>
+                <p className="text-2xl font-bold">{supportHandleTimeAverage}<span className="text-sm font-normal text-muted-foreground"> segundos</span></p>
+                <p className="text-[10px] text-muted-foreground">{formatTempoSegundos(supportHandleTimeAverage)}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
+                <Clock className="h-5 w-5 text-orange-500" />
+              </div>
+            </div>       
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+<div className="flex items-center justify-between rounded-xl border bg-card p-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">média da latência da rede</p>
+                <p className="text-2xl font-bold">{Math.round(cliente.network_latency_avg)}</p>
+                <p className="text-[10px] text-muted-foreground">segundos</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                <Network className="h-5 w-5 text-purple-500" />
+              </div>
+            </div>
+
+              <div className="flex items-center justify-between rounded-xl border bg-card p-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Taxa de abertura de e-mail</p>
+                <p className="text-2xl font-bold">{marketingOpenRate}%</p>
+                <p className="text-[10px] text-muted-foreground"></p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                <MailOpen className="h-5 w-5 text-green-500" />
+              </div>
             </div>
           </div>
         </div>
