@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from "react-leaflet";
-import type { RegionalData } from "@/data/mockData";
+import type { Localizacao } from "@/data/localizacao";
+import type { CityCoords } from "@/data/citiesData";
 import { getCategoriaColor } from "@/data/mockData";
 import { MapPin, Globe } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 interface MapaBrasilProps {
-  regioes: RegionalData[];
+  localizacoes: (Localizacao & CityCoords)[];
   selectedCidade: string | null;
   selectedEstado?: string | null;
   onSelectCidade: (cidade: string | null, estado: string | null) => void;
@@ -27,18 +28,16 @@ function cssVarToHex(cssVar: string): string {
 }
 
 /** Fly to a selected city or reset to Brazil view */
-function MapController({ selectedCidade, regioes }: { selectedCidade: string | null; regioes: RegionalData[] }) {
+function MapController({ selectedCidade, localizacoes }: { selectedCidade: string | null; localizacoes: (Localizacao & CityCoords)[] }) {
   const map = useMap();
-
   useMemo(() => {
     if (selectedCidade) {
-      const r = regioes.find((reg) => reg.cidade === selectedCidade);
-      if (r) map.flyTo([r.lat, r.lng], 8, { duration: 1 });
+      const r = localizacoes.find((reg) => reg.city === selectedCidade);
+      if (r && r.latitude && r.longitude) map.flyTo([r.latitude, r.longitude], 8, { duration: 1 });
     } else {
       map.flyTo([-14.5, -52], 4, { duration: 1 });
     }
-  }, [selectedCidade, regioes, map]);
-
+  }, [selectedCidade, localizacoes, map]);
   return null;
 }
 
@@ -82,16 +81,8 @@ function BrazilHighlight() {
   );
 }
 
-const MapaBrasil = ({ regioes, selectedCidade, selectedEstado, onSelectCidade }: MapaBrasilProps) => {
-  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
-
-  const handleCityClick = (regiao: RegionalData) => {
-    if (selectedCidade === regiao.cidade) {
-      onSelectCidade(null, null);
-    } else {
-      onSelectCidade(regiao.cidade, regiao.estado);
-    }
-  };
+const MapaBrasil = ({ localizacoes, selectedCidade, selectedEstado, onSelectCidade }: MapaBrasilProps) => {
+  const [hoveredState, setHoveredState] = useState<string | null>(null);
 
   return (
     <div className="relative rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -115,18 +106,18 @@ const MapaBrasil = ({ regioes, selectedCidade, selectedEstado, onSelectCidade }:
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
             />
             <BrazilHighlight />
-            <MapController selectedCidade={selectedCidade} regioes={regioes} />
+            <MapController selectedCidade={selectedCidade} localizacoes={localizacoes} />
 
-            {regioes.map((regiao) => {
-              const color = cssVarToHex(getCategoriaColor(regiao.categoria_cor));
-              const isSelected = selectedCidade === regiao.cidade || (!!selectedEstado && regiao.estado === selectedEstado);
-              const isHovered = hoveredCity === regiao.cidade;
-              const radius = getMarkerRadius(regiao.total_clientes, isSelected || isHovered);
-
+            {localizacoes.map((loc) => {
+              const color = "#00C853";
+              const isSelected = selectedCidade === loc.city || (!!selectedEstado && loc.state === selectedEstado);
+              const isHovered = hoveredState === loc.state;
+              const radius = getMarkerRadius(loc.quantidade, isSelected || isHovered);
+              if (!loc.latitude || !loc.longitude) return null;
               return (
                 <CircleMarker
-                  key={regiao.cidade}
-                  center={[regiao.lat, regiao.lng]}
+                  key={loc.city}
+                  center={[loc.latitude, loc.longitude]}
                   radius={radius}
                   pathOptions={{
                     color: isSelected ? "#333" : color,
@@ -135,16 +126,15 @@ const MapaBrasil = ({ regioes, selectedCidade, selectedEstado, onSelectCidade }:
                     weight: isSelected ? 3 : 1.5,
                   }}
                   eventHandlers={{
-                    click: () => handleCityClick(regiao),
-                    mouseover: () => setHoveredCity(regiao.cidade),
-                    mouseout: () => setHoveredCity(null),
+                    click: () => onSelectCidade(loc.city, loc.state),
+                    mouseover: () => setHoveredState(loc.state),
+                    mouseout: () => setHoveredState(null),
                   }}
                 >
                   <Tooltip direction="top" offset={[0, -radius]} opacity={0.95}>
                     <div className="text-xs">
-                      <p className="font-bold">{regiao.cidade} - {regiao.estado}</p>
-                      <p>NPS: <strong style={{ color }}>{regiao.nps_score}</strong></p>
-                      <p>{regiao.total_clientes.toLocaleString("pt-BR")} clientes</p>
+                      <p className="font-bold">{loc.city} - {loc.state}</p>
+                      <p>{loc.quantidade.toLocaleString("pt-BR")} clientes</p>
                     </div>
                   </Tooltip>
                 </CircleMarker>
@@ -155,7 +145,7 @@ const MapaBrasil = ({ regioes, selectedCidade, selectedEstado, onSelectCidade }:
 
         {/* Region list sidebar */}
         <div className="border-t lg:border-t-0 lg:border-l border-border p-3 overflow-y-auto max-h-[200px] sm:max-h-[400px] md:max-h-[480px]">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Regiões</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Estados</p>
           <div className="flex flex-row flex-wrap gap-1 lg:flex-col lg:flex-nowrap">
             <button
               onClick={() => onSelectCidade(null, null)}
@@ -168,27 +158,49 @@ const MapaBrasil = ({ regioes, selectedCidade, selectedEstado, onSelectCidade }:
               <Globe className="h-3 w-3 flex-shrink-0 text-primary" />
               <span className="truncate">Brasil</span>
             </button>
-            {regioes.map((r) => {
-              const color = cssVarToHex(getCategoriaColor(r.categoria_cor));
-              const isActive = selectedCidade === r.cidade || (!!selectedEstado && r.estado === selectedEstado);
-              return (
-                <button
-                  key={r.cidade}
-                  onClick={() => handleCityClick(r)}
-                  className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] transition-colors w-full ${
-                    isActive
-                      ? "bg-accent font-semibold text-accent-foreground"
-                      : "hover:bg-secondary"
-                  }`}
-                >
-                  <MapPin className="h-3 w-3 flex-shrink-0" style={{ color }} />
-                  <span className="truncate">{r.cidade}</span>
-                  <span className="ml-auto font-bold" style={{ color }}>
-                    {r.nps_score}
-                  </span>
-                </button>
-              );
-            })}
+            {/* Sidebar de estados únicos */}
+            {(() => {
+              const unique: { state: string; region: string; city: string; latitude: number|null; longitude: number|null; quantidade: number }[] = [];
+              localizacoes.forEach((loc) => {
+                if (!unique.some(u => u.state === loc.state)) {
+                  unique.push({
+                    state: loc.state,
+                    region: loc.region,
+                    city: loc.city,
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
+                    quantidade: loc.quantidade
+                  });
+                }
+              });
+              return unique.map((e) => {
+                const color = "#00C853";
+                const isActive = selectedEstado === e.state;
+                return (
+                  <button
+                    key={e.state}
+                    onClick={() => {
+                      if (isActive) {
+                        onSelectCidade(null, null);
+                      } else {
+                        onSelectCidade(e.city, e.state);
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] transition-colors w-full ${
+                      isActive
+                        ? "bg-accent font-semibold text-accent-foreground"
+                        : "hover:bg-secondary"
+                    }`}
+                  >
+                    <MapPin className="h-3 w-3 flex-shrink-0" style={{ color }} />
+                    <span className="truncate">{e.state} - {e.city}</span>
+                    <span className="ml-auto font-bold" style={{ color }}>
+                      {e.quantidade}
+                    </span>
+                  </button>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
