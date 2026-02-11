@@ -10,6 +10,14 @@ export interface Cliente {
   produtos: string[];
   data_cadastro: string;
   endereco?: string;
+  support_count: number;
+  support_handle_time_avg: number;
+  network_latency_avg: number;
+  marketing_open_rate: number;
+  plan_name: string; 
+  count_interactions: number;
+  favorite_channel: string;
+  digital_engagement: number;
 }
 
 export interface RegionalData {
