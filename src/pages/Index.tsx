@@ -93,7 +93,7 @@ const Index = () => {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm font-medium text-destructive">Erro ao carregar dados</p>
-          <p className="text-xs text-muted-foreground">Verifique se a API está disponível em localhost:5006</p>
+          <p className="text-xs text-muted-foreground">Verifique se a API está disponível na porta 5006 do servidor atual</p>
         </div>
       </div>
     );

@@ -1,4 +1,21 @@
-const API_BASE_URL = "http://localhost:5006";
+/**
+ * Monta a URL base da API dinamicamente a partir da URL do navegador.
+ * Mantém protocolo e hostname atuais, trocando apenas a porta para 5006.
+ *
+ * Exemplos:
+ *   http://localhost:8080        → http://localhost:5006
+ *   https://192.168.0.10:8080   → https://192.168.0.10:5006
+ *   https://meudominio.com:8080 → https://meudominio.com:5006
+ */
+function getApiBaseUrl(): string {
+  if (typeof window === "undefined") {
+    return "http://localhost:5006";
+  }
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:5006`;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Envelope padrão retornado por todas as procedures da API.
